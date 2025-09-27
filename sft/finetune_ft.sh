@@ -55,7 +55,7 @@ torchrun --standalone --nnodes=1 --nproc_per_node=$nproc_per_node \
     trainer.default_local_dir=$save_path \
     trainer.experiment_name=test_zpy_${env_type}-sft-qwen-2.5-3b-base \
     trainer.logger=['console'] \
-    trainer.total_epochs=1 \
+    trainer.total_epochs=5 \
     trainer.default_hdfs_dir=null \
     +trainer.max_ckpt_to_keep=2  \
     model.target_modules=all-linear \
