@@ -1,347 +1,181 @@
 # SPA: Self-Play with World Model for LLM Agents
 
-SPA (Self-Play with World Model) is a reinforcement learning framework that addresses the challenge of training Large Language Models (LLMs) as agents in out-of-distribution (OOD) scenarios. This recipe implements the approach described in our paper, where we equip LLM agents with an internal world model to better align reasoning with environmental dynamics and improve decision-making.
+<p align="center">
+  <a href="#homepage"><img src="https://img.shields.io/badge/Homepage-orange?style=for-the-badge"></a>
+  <a href="paper.pdf"><img src="https://img.shields.io/badge/Paper-red?style=for-the-badge"></a>
+  <a href="#post"><img src="https://img.shields.io/badge/Post-green?style=for-the-badge"></a>
+  <a href="#experiment-log"><img src="https://img.shields.io/badge/Experiment%20Log-purple?style=for-the-badge"></a>
+</p>
+
+SPA (Self-Play Agent) is a reinforcement learning recipe for training Large Language Model (LLM) agents in **out-of-distribution (OOD) environments**. By equipping agents with an **internal world model** through self-play supervised finetuning (SFT), SPA enables better grounding, broader exploration, and more reliable generalization.
+
+---
 
 ## Overview
 
-Large Language Models (LLMs) as agents often struggle in out-of-distribution (OOD) scenarios. Real-world environments are complex and dynamic, governed by task-specific rules and stochasticity, which makes it difficult for LLMs to ground their internal knowledge in those dynamics. Under such OOD conditions, vanilla RL training often fails to scale; we observe Pass@k–the probability that at least one of k sampled trajectories succeeds–drops markedly across training steps, indicating brittle exploration and limited generalization.
+LLM agents often struggle when deployed in environments that differ from their pre-training distribution. Standard reinforcement learning tends to overfit to narrow solution paths, improving **Pass@1** slightly but causing **Pass@k** to degrade. This reflects brittle exploration and weak generalization.
 
-Inspired by model-based reinforcement learning, we hypothesize that equipping LLM agents with an internal world model can better align reasoning with environmental dynamics and improve decision-making. We show how to encode this world model by decomposing it into two components: state representation and transition modeling.
+SPA addresses this by introducing a **world model** with two key components:
 
-Building on this, we introduce SPA, a simple reinforcement learning framework that cold-starts the policy via a Self-Play supervised finetuning (SFT) stage to learn the world model by interacting with the environment, then uses it to simulate future states prior to policy optimization. This simple initialization outperforms the online world-modeling baseline and greatly boosts the RL-based agent training performance.
+* **State Representation**: structured abstractions (e.g., symbolic coordinates in Sokoban) that lower perplexity and make spatial relations explicit.
+* **Transition Modeling**: predicting next states during self-play, enabling the agent to internalize environment dynamics before policy optimization.
+
+This initialization makes subsequent PPO training more stable and effective.
+
+---
 
 ## Key Results
 
-Experiments across diverse environments show that our approach significantly improves performance:
+SPA significantly improves performance across challenging environments:
 
-- **Sokoban**: Success rate improved from 25.6% to 59.8%
-- **FrozenLake**: Score improved from 22.1% to 70.9%
-- **Sudoku**: Enhanced performance on 4x4 Sudoku puzzles
+* **Sokoban**: Pass@1 success rate from **25.6% → 59.8%**
+* **FrozenLake**: Pass@1 success rate from **22.1% → 70.9%**
+* **Sudoku**: Pass@1 success rate from **0.0% → 59.6%**
 
-All results are achieved using the Qwen2.5-1.5B-Instruct model.
+These improvements are consistent across different LLM families, including **Qwen** and **LLaMA** models.
 
-## Framework Architecture
+---
 
-SPA implements a world model approach with three main components:
+## Framework
 
-1. **State Representation**: Learning to encode environment states
-2. **Transition Modeling**: Predicting future states after actions
-3. **Self-Play SFT**: Cold-starting the policy through supervised learning
+SPA training consists of three stages:
 
-The framework consists of three main stages:
+1. **Data Generation**: Collect self-play trajectories with `<observation>` and `<prediction>` states.
+2. **Supervised Finetuning (SFT)**: Train the agent to predict next states and actions.
+3. **PPO Optimization**: Reinforce policies initialized with the learned world model.
 
-1. **Data Generation**: Generate training trajectories with world model predictions
-2. **Supervised Fine-tuning (SFT)**: Train the model on the generated data
-3. **PPO Training**: Use reinforcement learning to improve the agent's performance
+This exploration-before-exploitation process allows agents to first **learn environment rules**, then optimize for rewards.
 
-## Directory Structure
+---
 
-```
-SPA/
-├── config/                    # Configuration files
-│   ├── base.yaml             # Main configuration
-│   ├── _2_sokoban.yaml       # Sokoban-specific config
-│   ├── _3_frozen_lake.yaml   # FrozenLake config
-│   ├── _4_countdown.yaml     # Countdown config
-│   ├── _5_metamathqa.yaml    # MetaMathQA config
-│   ├── _6_webshop.yaml       # WebShop config
-│   └── envs.yaml             # Environment configurations
-├── SPA_agent/                # Core agent components
-│   ├── agent_proxy.py        # Main agent proxy for LLM interactions
-│   ├── ctx_manager.py        # Context manager for conversation handling
-│   ├── es_manager.py         # Environment state manager
-│   ├── generate_sft_data.py  # Script to generate SFT training data
-│   └── base_llm.py          # Base LLM wrapper
-├── sft/                      # Supervised fine-tuning components
-│   ├── spa_sft_trainer.py    # SFT trainer implementation
-│   ├── spa_sft_dataset.py    # SFT dataset implementation
-│   ├── finetune_ft.sh        # SFT training script
-│   └── config/
-│       └── sft_trainer.yaml  # SFT trainer configuration
-├── run_spa.sh                  # Main training pipeline script
-├── train_ppo_sfted.sh        # PPO training script
-├── run_spa.sh               # Alternative run script
-└── README.md                 # This file
-```
+## Repository Setup
 
-## Prerequisites
-
-### Dependencies
-
-Make sure you have all required dependencies installed. The main requirements are:
+Clone **RAGEN** and place SPA inside:
 
 ```bash
-# Core dependencies
-torch>=2.0.0
-transformers>=4.30.0
-vllm==0.8.2
-ray>=2.10
-hydra-core
-flash-attn==2.7.4.post1
-tensordict>=0.8.0,<0.9.0
-wandb
-gymnasium
-gym_sokoban
-peft
-accelerate
+git clone git@github.com:RAGEN-AI/RAGEN.git
+cd RAGEN
+git clone git@github.com:shiqichen17/SPA.git
 ```
 
-### Environment Setup
+---
 
-1. Set up the required environment variables:
+## Environment Setup
+
+From the RAGEN root directory:
+
 ```bash
-export CUDA_VISIBLE_DEVICES="0,1"  # Adjust based on your GPU setup
-export TRANSFORMERS_CACHE='/ssddata/model_hub'
-export HF_HOME='/ssddata/model_hub'
-export WANDB_ENTITY=your_wandb_entity
+bash scripts/setup_ragen.sh
+pip uninstall -y torch torchvision torchaudio && pip install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+pip uninstall -y vllm flash-attn flash_attn
+pip install vllm==0.8.5.post1
+pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu12torch2.6cxx11abiFALSE-cp312-cp312-linux_x86_64.whl
+python -c "import torch; import flash_attn; import vllm; print('✅ All modules loaded successfully.')"
 ```
 
-2. Ensure the RAGEN framework is properly installed and accessible.
+> **Note**: Use the versions above exactly to avoid runtime errors.
+
+---
 
 ## Quick Start
 
-The easiest way to run the complete SPA pipeline is using the main training script:
+From the SPA directory:
 
 ```bash
-# Navigate to the SPA directory
-cd /ssddata/shiqi/RAGEN/SPA
+cd SPA
 bash run_spa.sh
 ```
 
-This will execute the complete pipeline:
-1. Generate SFT data with world model predictions
-2. Fine-tune the model on the generated data
-3. Train the agent using PPO
+This script runs the **full pipeline**:
 
-## Step-by-Step Usage
+* Generate self-play training data
+* Perform SFT world-model training
+* Run PPO policy optimization
 
-### 1. Data Generation
+Custom experiment names, output directories, or GPU devices can be set via environment variables in `run_spa.sh`.
 
-Generate training trajectories with world model predictions:
-
-```bash
-# Navigate to SPA directory
-cd /ssddata/shiqi/RAGEN/SPA
-
-# Set environment variables
-export MODE=add_worldmodel
-export MODEL=1.5B
-export OUTPUT_DIR=./sftdata/sokoban-data
-export BT_NUM=5
-export CONFIG_NAME=_2_sokoban
-
-# Generate SFT data
-python -m SPA_agent.generate_sft_data --config-name $CONFIG_NAME
-```
-
-### 2. Supervised Fine-tuning
-
-Fine-tune the model on the generated data:
-
-```bash
-cd sft
-bash finetune_ft.sh $CONFIG_NAME 4 $CHECKPOINT_DIR $OUTPUT_DIR $MODEL
-```
-
-### 3. PPO Training
-
-Train the agent using PPO:
-
-```bash
-cd ..
-bash train_ppo_sfted.sh "$CONFIG_NAME" "$latest_ckpt" "sokoban-${MODEL}-sft"
-```
+---
 
 ## Supported Environments
 
-SPA supports multiple environments through the RAGEN framework:
+SPA supports a variety of environments integrated through RAGEN:
 
-### Sokoban
-- **SimpleSokoban**: Basic Sokoban with 1 box (6x6 grid)
-- **HarderSokoban**: More complex Sokoban with 2 boxes (10x10 grid)
-- **Sokoban2Boxes**: Alternative 2-box configuration
-- **SokobanDifferentGridVocab**: Different grid vocabulary
-- **SokobanDifferentActionVocab**: Different action vocabulary
+* **Sokoban** (grid-based spatial puzzles)
+* **FrozenLake** (navigation under stochastic transitions)
+* **Sudoku** (4×4 logical puzzles)
 
-### Other Environments
-- **FrozenLake**: Navigation puzzle with slippery ice
-- **Countdown**: Mathematical equation solving
-- **MetaMathQA**: Mathematical reasoning
-- **Sudoku**: 4x4 Sudoku puzzle solving
-- **WebShop**: Online shopping simulation
+---
 
-## Configuration
+## Example World Model Trace
 
-### Main Configuration (`config/base.yaml`)
-
-Key configuration parameters:
-
-- **Model Settings**:
-  - `model_path`: Base model path (e.g., "Qwen/Qwen2.5-1.5B-Instruct")
-  - `micro_batch_size_per_gpu`: Batch size per GPU
-  - `ppo_mini_batch_size`: PPO mini-batch size
-
-- **Training Settings**:
-  - `trainer.total_training_steps`: Total training steps
-  - `trainer.n_gpus_per_node`: Number of GPUs per node
-  - `trainer.experiment_name`: Experiment name for logging
-
-- **Agent Settings**:
-  - `agent_proxy.max_turn`: Maximum number of turns per episode
-  - `agent_proxy.max_actions_per_turn`: Maximum actions per turn
-  - `agent_proxy.enable_think`: Enable thinking mode
-
-- **Environment Settings**:
-  - `es_manager.train.env_groups`: Number of environment groups
-  - `es_manager.train.group_size`: Size of each group
-  - `es_manager.train.env_configs.tags`: Environment types
-
-### Environment-Specific Configuration
-
-Each environment has its own configuration file (e.g., `_2_sokoban.yaml`, `_3_frozen_lake.yaml`) that extends the base configuration with environment-specific settings.
-
-## World Model Implementation
-
-The SPA recipe implements a world model approach where:
-
-1. **Observation**: The agent observes the current state with coordinates
-2. **Prediction**: The agent predicts the next state after taking actions
-3. **Planning**: The agent uses these predictions for planning
-4. **Action**: The agent executes the planned actions
-
-The world model is learned through:
-- **State Prediction**: Learning to predict future states
-- **Action Planning**: Using predictions for action selection
-- **Reward Optimization**: Optimizing for task completion
-
-### Example World Model Output
-
-For Sokoban, the agent generates outputs like:
+For Sokoban, SPA generates structured reasoning traces:
 
 ```
 <think>
 <observation>
 ######
-#_####
-#_P###
-#_X#_#
-#__O_#
+#___O#
+#__X_#
+###P_#
+###__#
 ######
-Player (P) is at (2,2); box (X) is at (3,2); target (O) is at (4,3).
+Player (P) at (3,3); box (X) at (2,3); goal at (1,4).
 </observation>
-1 Down – I push box to (4,2).
-2 Left – I step to (3,1).
-3 Down – I stand left of box, ready to push it Right onto target.
 <prediction>
 ######
-#_####
-#__###
-#__#_#
-#PXO_#
+#___O#
+#____#
+###X_#
+###P_#
 ######
 </prediction>
 </think>
-<answer>Down || Left || Down</answer>
+<answer>Up</answer>
 ```
 
-## Key Components
+This explicit **observation → prediction → action** format grounds decision-making in environment dynamics.
 
-### Agent Proxy (`SPA_agent/agent_proxy.py`)
+---
 
-The main component that handles LLM interactions:
-- **VllmWrapperWg**: Wrapper for VLLM-based generation
-- **ApiCallingWrapperWg**: Wrapper for API-based LLM calls
-- **RandomActionWrapperWg**: Wrapper for random action generation
-- **LLMAgentProxy**: Main proxy that coordinates between context manager and environment state manager
+## Configuration
 
-### Context Manager (`SPA_agent/ctx_manager.py`)
+Key configuration files are located in `config/`:
 
-Handles conversation context and message formatting:
-- Manages conversation history
-- Formats messages for LLM input
-- Parses LLM responses
-- Handles world model predictions
+* `base.yaml`: core training settings
+* `_2_sokoban.yaml`, `_3_frozen_lake.yaml`, etc.: environment-specific configs
+* `envs.yaml`: environment registry
 
-### Environment State Manager (`SPA_agent/es_manager.py`)
+Important parameters:
 
-Manages environment states and transitions:
-- Initializes and resets environments
-- Executes actions in environments
-- Tracks environment status and metrics
-- Handles environment-specific configurations
+* `model_path`: base model (e.g., `Qwen/Qwen2.5-1.5B-Instruct`)
+* `trainer.total_training_steps`: PPO steps
+* `agent_proxy.max_turn`: max turns per episode
+* `es_manager.train.env_groups`: number of environment groups
 
-### SFT Components
-
-- **spa_sft_trainer.py**: Implements FSDP-based SFT training
-- **spa_sft_dataset.py**: Handles SFT dataset loading and preprocessing
-- **generate_sft_data.py**: Generates training data with world model predictions
-
-## Monitoring and Logging
-
-The training process includes comprehensive logging:
-
-- **Wandb Integration**: Automatic logging to Weights & Biases
-- **Console Logging**: Real-time progress updates
-- **File Logging**: Detailed logs saved to files
-- **Metrics Tracking**: Success rates, rewards, and other metrics
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Import Errors**: Make sure the RAGEN framework is properly installed and the Python path includes `/ssddata/shiqi/RAGEN`
-
-2. **CUDA Issues**: Ensure proper GPU setup and CUDA_VISIBLE_DEVICES configuration
-
-3. **Memory Issues**: Adjust batch sizes and model configurations based on available GPU memory
-
-4. **Path Issues**: Verify all file paths are correct and accessible
-
-### Debug Mode
-
-Enable debug logging by setting:
-```bash
-export VERL_SFT_LOGGING_LEVEL=DEBUG
-```
-
-### Performance Optimization
-
-- Use appropriate batch sizes for your hardware
-- Enable gradient checkpointing for memory efficiency
-- Use mixed precision training (bfloat16)
-- Optimize sequence parallel settings
-
-## Advanced Usage
-
-### Custom Environments
-
-To add custom environments, modify `config/envs.yaml` and add your environment configuration following the existing patterns.
-
-### Custom Models
-
-To use different base models, update the `model_path` in `config/base.yaml` and ensure the model is compatible with the framework.
-
-### Distributed Training
-
-For multi-node training, configure the appropriate distributed settings in the training scripts.
+---
 
 ## Citation
 
-If you use SPA in your research, please cite our paper:
+If you use SPA in your work, please cite:
 
 ```bibtex
-@article{spa2024,
-  title={SPA: Self-Play with World Model for LLM Agents},
-  author={...},
-  journal={...},
-  year={2024}
+@inproceedings{spa2026,
+  title={Internalizing World Models via Self-Play Finetuning for Agentic RL},
+  author={Anonymous},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2026},
+  note={Under review}
 }
 ```
 
+---
+
 ## License
 
-This project is licensed under the Apache License 2.0. See the LICENSE file for details.
+This project is licensed under the Apache 2.0 License. See the LICENSE file for details.
+
+---
 
 ## Acknowledgments
 
-This work is part of the RAGEN framework for training agents with reinforcement learning and generative models.# SPA
+SPA is built on top of the [RAGEN](https://github.com/RAGEN-AI/RAGEN) framework, extending it with explicit world-model pretraining for improved RL scalability.
