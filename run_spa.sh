@@ -12,37 +12,20 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 # Environment Configuration
 # =============================================================================
 
-# Model and cache directories
-export TRITON_CACHE_DIR='/ssddata/model_hub'
-export TRANSFORMERS_CACHE='/ssddata/model_hub'
-export HF_HOME='/ssddata/model_hub'
-export HF_DATASETS_CACHE='/ssddata/model_hub'
-export VLLM_CONFIG_ROOT='/ssddata/model_hub'
-export NLTK_DATA='/ssddata/model_hub'
-
-# Weights & Biases configuration
-export WANDB_ARTIFACT_DIR='/ssddata/model_hub'
-export WANDB_CACHE_DIR='/ssddata/model_hub'
-export WANDB_DIR='/ssddata/model_hub'
-export WANDB_TMP_DIR='/ssddata/model_hub'
-export WANDB_DATA_DIR='/ssddata/model_hub'
-export WANDB_ENTITY=1430411375
-
-# Ray and temporary directories
-export RAY_TMPDIR='/ssddata/model_hub'
-export TMPDIR='/ssddata/model_hub'
-export TEMP='/ssddata/model_hub'
-export TMP='/ssddata/model_hub'
-
 # Ray configuration
 export RAY_object_spilling_threshold=0.99
 export RAY_BACKEND_LOG_LEVEL=FATAL
-
-# Application-specific paths
-export ALFWORLD_DATA='/ssddata/shiqi/ETO/eval_agent/data/alfworld'
-
 # Reproducibility
 export PYTHONHASHSEED=10000
+
+
+export JAVA_HOME=/home/aiops/zhuty/ragen-dev/jdk-21.0.6
+export PATH=$JAVA_HOME/bin:$PATH
+# ensure that the JAVA_HOME exists
+if [ ! -d "$JAVA_HOME" ]; then
+    echo "JAVA_HOME: $JAVA_HOME does not exist"
+    exit 1
+fi
 
 # =============================================================================
 # Training Configuration
@@ -61,7 +44,6 @@ CHECKPOINT_DIR="./sftckpt/checkpoints${CONFIG_NAME}-${MODEL}-${RENDER_MODE}-qwen
 
 # Export training variables
 export MODE="$MODE"
-export CUDA_VISIBLE_DEVICES='4,5,6,7'
 export MODEL="$MODEL"
 export PENALTY_VALUE=0.0
 export RENDER_MODE="$RENDER_MODE"
@@ -72,6 +54,21 @@ export OUTPUT_DIR="$OUTPUT_DIR"
 # =============================================================================
 # Validation and Setup
 # =============================================================================
+
+
+# =============================================================================
+# Training Pipeline
+# =============================================================================
+
+echo "Starting training pipeline..."
+
+# Step 1: Generate SFT data (commented out - uncomment if needed)
+echo "Step 1: Generating SFT data..."
+# python -m SPA_agent.generate_sft_data --config-name "$CONFIG_NAME"
+
+# Step 2: Fine-tuning (commented out - uncomment if needed)
+echo "Step 2: Fine-tuning..."
+# bash sft/finetune_ft.sh "$CONFIG_NAME" 4 "$CHECKPOINT_DIR" "$OUTPUT_DIR" "$MODEL"
 
 # Validate checkpoint directory exists
 if [[ ! -d "$CHECKPOINT_DIR" ]]; then
@@ -105,23 +102,10 @@ if [[ ! -d "$LATEST_CKPT" ]]; then
     exit 1
 fi
 
-# =============================================================================
-# Training Pipeline
-# =============================================================================
-
-echo "Starting training pipeline..."
-
-Step 1: Generate SFT data (commented out - uncomment if needed)
-echo "Step 1: Generating SFT data..."
-python -m SPA_agent.generate_sft_data --config-name "$CONFIG_NAME"
-
-Step 2: Fine-tuning (commented out - uncomment if needed)
-echo "Step 2: Fine-tuning..."
-bash sft/finetune_ft.sh "$CONFIG_NAME" 4 "$CHECKPOINT_DIR" "$OUTPUT_DIR" "$MODEL"
 
 # Step 3: PPO Training
 echo "Step 3: Starting PPO training..."
-EXPERIMENT_NAME="sokoban-${MODEL}-RENDER_MODE${RENDER_MODE}-sft-nomask"
+EXPERIMENT_NAME="sokoban-${MODEL}-RENDER_MODE${RENDER_MODE}-spa"
 
 echo "Training configuration:"
 echo "  - Config: $CONFIG_NAME"

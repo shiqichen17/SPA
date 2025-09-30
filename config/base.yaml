@@ -3,7 +3,7 @@ defaults:
   - envs
 
 system:
-  CUDA_VISIBLE_DEVICES: "5"
+  CUDA_VISIBLE_DEVICES: "0"
 
 seed:
   train: 10000
@@ -12,7 +12,8 @@ seed:
 micro_batch_size_per_gpu: 1
 # ppo_mini_batch_size: 512
 ppo_mini_batch_size: 64
-model_path: Qwen/Qwen2.5-${oc.env:MODEL}-Instruct
+model_path: Qwen/Qwen2.5-1.5B-Instruct
+enable_response_mask: False
 
 actor_rollout_ref:
   model:
@@ -35,7 +36,6 @@ actor_rollout_ref:
     mode: base
     log_prob_micro_batch_size_per_gpu: ${micro_batch_size_per_gpu} # following micro_batch_size_per_gpu
   rollout:
-    mode: base
     log_prob_micro_batch_size_per_gpu: ${micro_batch_size_per_gpu} # following micro_batch_size_per_gpu
     tensor_model_parallel_size: 1
     max_model_len: 3600
@@ -68,6 +68,7 @@ data:
 algorithm:
   gamma: 1.0
   lam: 1.0
+  high_level_gamma: 0.95
   adv_estimator: gae
   kl_penalty: kl  # how to estimate kl divergence
   kl_ctrl:
