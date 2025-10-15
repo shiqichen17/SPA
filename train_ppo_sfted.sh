@@ -39,6 +39,13 @@ echo "  - Model: $MODEL"
 echo "  - Mode: $MODE"
 echo "  - Render Mode: $RENDER_MODE"
 echo "WANDB_ENTITY: $WANDB_ENTITY"
+
+if [ -z "$BASE_DIR" ]; then
+    echo "BASE_DIR is not set"
+    BASE_DIR=/home/aiops/zhuty/ragen/checkpoints
+    echo "BASE_DIR is not set, using default: $BASE_DIR"
+fi
+
 # Run training
 CUDA_VISIBLE_DEVICES='0,1,2,3' python ../train.py \
     --config-path=SPA/config \
@@ -49,7 +56,7 @@ CUDA_VISIBLE_DEVICES='0,1,2,3' python ../train.py \
     trainer.total_training_steps=1000 \
     trainer.experiment_name=${name} \
     trainer.save_freq=100 \
-    trainer.default_local_dir=/home/aiops/zhuty/ragen/checkpoints/$ckpt \
+    trainer.default_local_dir=$BASE_DIR/${CONFIG_NAME}/$ckpt \
     actor_rollout_ref.rollout.tensor_model_parallel_size=4 \
     +actor_rollout_ref.rollout.tp_size_check=True \
     +algorithm.bi_level_gae=False 
