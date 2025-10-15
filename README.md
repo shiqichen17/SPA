@@ -105,7 +105,11 @@ bash run_spa.sh _2_sokoban last False
 bash run_spa.sh _10_sudoku 2000 False
 ```
 
-The script manages the complete workflow: data generation with world-model predictions, supervised finetuning, and PPO optimization.
+This script runs the **full pipeline** (when `GENERATE_DATA=True`):
+
+* Generate self-play training data
+* Perform SFT world-model training
+* Run PPO policy optimization
 
 ---
 
