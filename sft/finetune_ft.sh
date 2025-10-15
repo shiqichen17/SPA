@@ -6,7 +6,7 @@ env_type=$1
 nproc_per_node=$2
 save_path=$3
 data_path=$4
-model=$5
+size=$5
 
 shift 5
 
@@ -50,10 +50,10 @@ torchrun --standalone --nnodes=1 --nproc_per_node=$nproc_per_node \
     data.max_length=2048 \
     optim.lr=1e-4 \
     data.train_batch_size=16 \
-    data.micro_batch_size=2 \
-    model.partial_pretrain=Qwen/Qwen2.5-$model-Instruct \
+    data.micro_batch_size_per_gpu=1 \
+    model.partial_pretrain=Qwen/Qwen2.5-$size-Instruct \
     trainer.default_local_dir=$save_path \
-    trainer.experiment_name=${env_type}-sft-qwen-2.5-$model-instruct \
+    trainer.experiment_name=${env_type}-sft-qwen-2.5-$size-instuct \
     trainer.logger=['console'] \
     trainer.total_epochs=5 \
     trainer.default_hdfs_dir=null \

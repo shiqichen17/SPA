@@ -161,8 +161,8 @@ def main(config):
     os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
     os.environ["CUDA_VISIBLE_DEVICES"] = os.environ.get("CUDA_VISIBLE_DEVICES", str(config.system.CUDA_VISIBLE_DEVICES))
     
-    
     model_path = config.model_path
+    print(f"Loading model from {model_path}")
     config.actor_rollout_ref.model.path = model_path
     print(f"Loading tokenizer from {config.actor_rollout_ref.model.path}")
     tokenizer = AutoTokenizer.from_pretrained(config.actor_rollout_ref.model.path)
