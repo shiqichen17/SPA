@@ -159,13 +159,16 @@ Important parameters:
 If you use SPA in your work, please cite:
 
 ```bibtex
-@inproceedings{spa2026,
-  title={Internalizing World Models via Self-Play Finetuning for Agentic RL},
-  author={Anonymous},
-  booktitle={International Conference on Learning Representations (ICLR)},
-  year={2026},
-  note={Under review}
+@misc{chen2025spa,
+      title={Internalizing World Models via Self-Play Finetuning for Agentic RL}, 
+      author={Shiqi Chen and Tongyao Zhu and Zian Wang and Jinghan Zhang and Kangrui Wang and Siyang Gao and Teng Xiao and Yee Whye Teh and Junxian He and Manling Li},
+      year={2025},
+      eprint={2510.15047},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2510.15047}, 
 }
+
 ```
 
 ---
