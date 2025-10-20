@@ -1,8 +1,8 @@
 # SPA: Self-Play with World Model for LLM Agents
 
 <p align="center">
-  <a href="spa-ai.github.io"><img src="https://img.shields.io/badge/Homepage-orange?style=for-the-badge"></a>
-  <a href="[https://arxiv.org/abs/2510.15047"><img src="https://img.shields.io/badge/Paper-red?style=for-the-badge"></a>
+  <a href="https://spa-ai.github.io"><img src="https://img.shields.io/badge/Homepage-orange?style=for-the-badge"></a>
+  <a href="https://arxiv.org/abs/2510.15047"><img src="https://img.shields.io/badge/Paper-red?style=for-the-badge"></a>
   <a href="#post"><img src="https://img.shields.io/badge/Post-green?style=for-the-badge"></a>
   <a href="#experiment-log"><img src="https://img.shields.io/badge/Experiment%20Log-purple?style=for-the-badge"></a>
 </p>
