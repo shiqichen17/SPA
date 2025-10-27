@@ -1,14 +1,12 @@
 # NOTE only tested with 1 GPU
 set -x
-export TRANSFORMERS_CACHE='/ssddata/shiqi/model_hub/hub'
-export HF_HOME='/ssddata/shiqi/model_hub/hub'
 
 
 env_type=$1
 nproc_per_node=$2
 save_path=$3
 data_path=$4
-model=$5
+size=$5
 
 shift 5
 
@@ -40,6 +38,8 @@ if [ "$nproc_per_node" -gt "$num_visible_gpus" ]; then
     exit 1
 fi
 
+echo "Starting training..."
+echo "nproc_per_node: $nproc_per_node"
 
 torchrun --standalone --nnodes=1 --nproc_per_node=$nproc_per_node \
  -m sft.spa_sft_trainer \
@@ -50,16 +50,16 @@ torchrun --standalone --nnodes=1 --nproc_per_node=$nproc_per_node \
     data.max_length=2048 \
     optim.lr=1e-4 \
     data.train_batch_size=16 \
-    data.micro_batch_size=4 \
-    model.partial_pretrain=Qwen/Qwen2.5-$model \
+    data.micro_batch_size_per_gpu=1 \
+    model.partial_pretrain=Qwen/Qwen2.5-$size-Instruct \
     trainer.default_local_dir=$save_path \
-    trainer.experiment_name=test_zpy_${env_type}-sft-qwen-2.5-3b-base \
+    trainer.experiment_name=${env_type}-sft-qwen-2.5-$size-instuct \
     trainer.logger=['console'] \
     trainer.total_epochs=5 \
     trainer.default_hdfs_dir=null \
     +trainer.max_ckpt_to_keep=2  \
     model.target_modules=all-linear \
-     trainer.project_name=gsm8k-sft \
+    trainer.project_name=spa-sft \
     model.enable_gradient_checkpointing=False $@ \
     2>&1 | tee  $save_path/train.log
 

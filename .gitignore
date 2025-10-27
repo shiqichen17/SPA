@@ -3,3 +3,7 @@ sftdata
 outputs
 log
 data
+wandb
+sft_data*
+sftdata*
+__pycache__

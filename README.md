@@ -83,16 +83,33 @@ From the SPA directory:
 
 ```bash
 cd SPA
-bash run_spa.sh
+bash run_spa.sh <CONFIG_NAME> [CKPT] [GENERATE_DATA]
 ```
 
-This script runs the **full pipeline**:
+**Arguments:**
+
+* `CONFIG_NAME` (required): Environment config - `_2_sokoban`, `_10_sudoku`, or `_3_frozen_lake`
+* `CKPT` (optional, default: `last`): Checkpoint to use (`last` for latest, or step number like `1000`)
+* `GENERATE_DATA` (optional, default: `False`): Set to `True` to run full pipeline, `False` for PPO only
+
+**Examples:**
+
+```bash
+# Full pipeline (generate data → SFT → PPO)
+bash run_spa.sh _2_sokoban last True
+
+# PPO training only with existing checkpoint
+bash run_spa.sh _2_sokoban last False
+
+# Use specific checkpoint step
+bash run_spa.sh _10_sudoku 2000 False
+```
+
+This script runs the **full pipeline** (when `GENERATE_DATA=True`):
 
 * Generate self-play training data
 * Perform SFT world-model training
 * Run PPO policy optimization
-
-Custom experiment names, output directories, or GPU devices can be set via environment variables in `run_spa.sh`.
 
 ---
 
