@@ -113,6 +113,23 @@ This script runs the **full pipeline** (when `GENERATE_DATA=True`):
 
 ---
 
+## Pretrained Models and Datasets
+
+We provide pretrained models and training datasets for all three environments on Hugging Face:
+
+| Environment | 📊 SFT Training Data | 🤖 Model (after self-play finetuning) |
+|------------|------------|------------|
+| **Sokoban** | [SPA-sokoban-data](https://huggingface.co/datasets/tyzhu/SPA-sokoban-data) | [SPA-sokoban-qwen2.5-1.5b-instruct](https://huggingface.co/tyzhu/SPA-sokoban-qwen2.5-1.5b-instruct) |
+| **FrozenLake** | [SPA-frozenlake-data](https://huggingface.co/datasets/tyzhu/SPA-frozenlake-data) | [SPA-frozenlake-qwen2.5-1.5b-instruct](https://huggingface.co/tyzhu/SPA-frozenlake-qwen2.5-1.5b-instruct) |
+| **Sudoku** | [SPA-sudoku-data](https://huggingface.co/datasets/tyzhu/SPA-sudoku-data) | [SPA-sudoku-qwen2.5-1.5b-instruct](https://huggingface.co/tyzhu/SPA-sudoku-qwen2.5-1.5b-instruct) |
+
+These resources allow you to:
+- **Use the pretrained models** directly for inference or further finetuning
+- **Reproduce the SFT stage** using the provided training data
+- **Skip data generation** and start from the SFT or PPO stages
+
+---
+
 ## Supported Environments
 
 SPA supports a variety of environments integrated through RAGEN:
