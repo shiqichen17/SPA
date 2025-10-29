@@ -128,6 +128,8 @@ These resources allow you to:
 - **Reproduce the SFT stage** using the provided training data
 - **Skip data generation** and start from the SFT or PPO stages
 
+> **Note**: The FrozenLake and Sudoku datasets include trajectory filtering to remove trajectories not following the format, while the Sokoban dataset contains unfiltered raw trajectories from self-play data generation.
+
 ---
 
 ## Supported Environments
